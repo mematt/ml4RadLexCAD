@@ -1,0 +1,1092 @@
+---
+title: "ml4RadLexCAD - 'ASPECTS-check' functions for generating calibration-plots"
+author: "Maros ME; maros@uni-heidelberg.de"
+date: "4/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+## Define required objects
+
+```{r, echo=F, eval=F}
+table(y)
+#y
+# no yes 
+# 52 154 
+str(y)
+#Factor w/ 2 levels "no","yes": 2 2 1 2 2 2 2 2 2 1 ...
+y
+# [1] yes yes no  yes yes yes yes yes yes no  yes yes yes yes yes yes yes yes yes yes yes yes no  yes yes yes yes yes yes yes no  yes yes
+# [34] yes yes no  yes yes yes no  no  yes yes yes no  no  no  yes no  yes no  yes no  no  no  yes no  yes yes no  yes yes yes no  yes yes
+# [67] yes yes yes yes no  yes yes no  no  yes no  yes yes no  yes no  yes yes yes yes yes yes yes yes yes no  yes yes yes yes yes yes no 
+# [100] no  yes yes yes yes yes yes yes yes yes yes yes yes yes yes yes yes no  yes yes yes yes no  yes yes no  yes yes yes yes yes no  no 
+# [133] no  no  yes yes no  yes yes yes yes no  yes yes yes no  yes yes yes no  no  yes yes yes no  yes yes no  yes yes yes no  yes no  yes
+# [166] yes yes no  yes yes no  yes no  yes yes yes yes yes yes no  yes yes yes yes yes yes yes yes yes no  yes yes yes no  yes yes yes yes
+# [199] yes yes no  yes yes no  yes no 
+
+nfolds
+# List of 5
+# $ outer1:List of 2
+# ..$ :List of 1
+# .. ..$ outer1:List of 2
+# .. .. ..$ train: int [1:164] 1 2 3 4 6 8 9 10 12 13 ...
+# .. .. ..$ test : int [1:42] 5 7 11 15 24 25 28 31 41 55 ...
+# ..$ :List of 5
+# .. ..$ inner1:List of 2
+# .. .. ..$ train: int [1:130] 1 2 3 6 8 12 16 17 21 23 ...
+# .. .. ..$ test : int [1:34] 4 9 10 13 14 18 19 20 22 38 ...
+# .. ..$ inner2:List of 2
+# .. .. ..$ train: int [1:131] 1 3 4 6 8 9 10 12 13 14 ...
+# .. .. ..$ test : int [1:33] 2 21 23 30 33 44 47 48 50 54 ...
+# .. ..$ inner3:List of 2
+# .. .. ..$ train: int [1:131] 1 2 4 6 8 9 10 12 13 14 ...
+# .. .. ..$ test : int [1:33] 3 36 37 42 52 56 58 61 75 91 ...
+# .. ..$ inner4:List of 2
+# .. .. ..$ train: int [1:132] 1 2 3 4 9 10 13 14 16 18 ...
+# .. .. ..$ test : int [1:32] 6 8 12 17 32 35 40 43 51 53 ...
+# .. ..$ inner5:List of 2
+# .. .. ..$ train: int [1:132] 2 3 4 6 8 9 10 12 13 14 ...
+# .. .. ..$ test : int [1:32] 1 16 26 27 29 34 45 62 64 68 ...
+# $ outer2:List of 2
+# ..$ :List of 1
+# .. ..$ outer2:List of 2
+# .. .. ..$ train: int [1:164] 2 4 5 6 7 8 9 11 12 14 ...
+# .. .. ..$ test : int [1:42] 1 3 10 13 20 36 38 39 42 44 ...
+# ..$ :List of 5
+# .. ..$ inner1:List of 2
+# .. .. ..$ train: int [1:130] 4 5 6 7 8 9 11 14 15 16 ...
+# .. .. ..$ test : int [1:34] 2 12 18 19 23 32 41 45 55 70 ...
+# .. ..$ inner2:List of 2
+# .. .. ..$ train: int [1:131] 2 4 6 7 9 11 12 14 15 16 ...
+# .. .. ..$ test : int [1:33] 5 8 24 35 40 49 51 54 58 61 ...
+# .. ..$ inner3:List of 2
+# .. .. ..$ train: int [1:131] 2 5 6 7 8 12 15 18 19 21 ...
+# .. .. ..$ test : int [1:33] 4 9 11 14 16 17 28 33 52 56 ...
+# .. ..$ inner4:List of 2
+# .. .. ..$ train: int [1:132] 2 4 5 7 8 9 11 12 14 15 ...
+# .. .. ..$ test : int [1:32] 6 21 22 25 27 46 47 53 59 63 ...
+# .. ..$ inner5:List of 2
+# .. .. ..$ train: int [1:132] 2 4 5 6 8 9 11 12 14 16 ...
+# .. .. ..$ test : int [1:32] 7 15 26 29 30 31 34 37 43 48 ...
+# $ outer3:List of 2
+# ..$ :List of 1
+# .. ..$ outer3:List of 2
+# .. .. ..$ train: int [1:165] 1 2 3 5 7 10 11 12 13 15 ...
+# .. .. ..$ test : int [1:41] 4 6 8 9 14 34 37 40 46 47 ...
+# ..$ :List of 5
+# .. ..$ inner1:List of 2
+# .. .. ..$ train: int [1:131] 1 5 7 10 13 17 18 19 21 22 ...
+# .. .. ..$ test : int [1:34] 2 3 11 12 15 16 20 25 26 49 ...
+# .. ..$ inner2:List of 2
+# .. .. ..$ train: int [1:131] 1 2 3 7 10 11 12 15 16 17 ...
+# .. .. ..$ test : int [1:34] 5 13 18 22 23 27 32 44 45 62 ...
+# .. ..$ inner3:List of 2
+# .. .. ..$ train: int [1:132] 1 2 3 5 11 12 13 15 16 17 ...
+# .. .. ..$ test : int [1:33] 7 10 24 41 42 43 48 72 74 76 ...
+# .. ..$ inner4:List of 2
+# .. .. ..$ train: int [1:133] 1 2 3 5 7 10 11 12 13 15 ...
+# .. .. ..$ test : int [1:32] 17 21 28 29 38 39 50 52 55 58 ...
+# .. ..$ inner5:List of 2
+# .. .. ..$ train: int [1:133] 2 3 5 7 10 11 12 13 15 16 ...
+# .. .. ..$ test : int [1:32] 1 19 30 31 33 35 36 53 54 60 ...
+# $ outer4:List of 2
+# ..$ :List of 1
+# .. ..$ outer4:List of 2
+# .. .. ..$ train: int [1:165] 1 2 3 4 5 6 7 8 9 10 ...
+# .. .. ..$ test : int [1:41] 16 17 18 19 23 26 29 30 32 33 ...
+# ..$ :List of 5
+# .. ..$ inner1:List of 2
+# .. .. ..$ train: int [1:131] 1 2 3 4 5 6 7 8 9 10 ...
+# .. .. ..$ test : int [1:34] 13 41 45 51 58 59 63 70 72 80 ...
+# .. ..$ inner2:List of 2
+# .. .. ..$ train: int [1:131] 1 2 3 4 5 6 8 9 12 13 ...
+# .. .. ..$ test : int [1:34] 7 10 11 25 28 36 42 60 61 62 ...
+# .. ..$ inner3:List of 2
+# .. .. ..$ train: int [1:132] 1 3 7 9 10 11 13 15 20 22 ...
+# .. .. ..$ test : int [1:33] 2 4 5 6 8 12 14 21 27 37 ...
+# .. ..$ inner4:List of 2
+# .. .. ..$ train: int [1:133] 1 2 4 5 6 7 8 9 10 11 ...
+# .. .. ..$ test : int [1:32] 3 15 34 46 73 78 102 108 110 114 ...
+# .. ..$ inner5:List of 2
+# .. .. ..$ train: int [1:133] 2 3 4 5 6 7 8 10 11 12 ...
+# .. .. ..$ test : int [1:32] 1 9 20 22 24 31 35 39 40 57 ...
+# $ outer5:List of 2
+# ..$ :List of 1
+# .. ..$ outer5:List of 2
+# .. .. ..$ train: int [1:166] 1 3 4 5 6 7 8 9 10 11 ...
+# .. .. ..$ test : int [1:40] 2 12 21 22 27 35 45 58 71 72 ...
+# ..$ :List of 5
+# .. ..$ inner1:List of 2
+# .. .. ..$ train: int [1:132] 1 3 4 5 7 8 9 10 11 13 ...
+# .. .. ..$ test : int [1:34] 6 19 42 43 47 48 49 50 52 54 ...
+# .. ..$ inner2:List of 2
+# .. .. ..$ train: int [1:132] 1 3 4 5 6 7 14 16 17 18 ...
+# .. .. ..$ test : int [1:34] 8 9 10 11 13 15 29 33 37 46 ...
+# .. ..$ inner3:List of 2
+# .. .. ..$ train: int [1:133] 5 6 7 8 9 10 11 13 15 18 ...
+# .. .. ..$ test : int [1:33] 1 3 4 14 16 17 25 30 31 36 ...
+# .. ..$ inner4:List of 2
+# .. .. ..$ train: int [1:133] 1 3 4 6 7 8 9 10 11 13 ...
+# .. .. ..$ test : int [1:33] 5 18 20 32 34 53 60 67 69 70 ...
+# .. ..$ inner5:List of 2
+# .. .. ..$ train: int [1:134] 1 3 4 5 6 8 9 10 11 13 ...
+# .. .. ..$ test : int [1:32] 7 23 24 26 28 40 41 44 59 62 ...
+```
+
+
+```{r, echo=F, eval=FALSE}
+list.object.name.2.get = c("probs", 
+                           "scores.pred.fasttext", 
+                           "scores.pred.svm.e1071.mtx", #"scores.pred.svm", # "scores.pred.svm.e1071.mtx"
+                           "scores.pred.rf.tuned.brier", 
+                           "scores.pred.rf.tuned.miscerr", 
+                           "scores.pred.rf.tuned.mlogl", 
+                           #"scores.pred.xgboost", 
+                           "scores",
+                           "scores")
+
+```
+
+***
+
+## Define custom calibrator plotting functions
+
+### Custom calibration/reliability plot COMBO (COMBINATION) PLOTTER - "my_func_reliab_diagram()"
+
+```{r}
+####################################################### My Function - Reliability Diagram *START* ##############################################################
+## Citations: # Reliability diagrams - DeGroot & Fienberg, 1982,  Niculescu & Caruana 2004, Daniel Nee (Online Blog), Oct 09, 2014
+
+## "HELP" ##:
+#  Plots a reliability chart and histogram of a set of predictions from a classifier for a given diagnosis/tumor type
+# Arguments: 
+#   all.true.class.labels:    "y <- anno$V5"    Vector of all true labels. Will be recoded as binary (0 or 1) based on class2show in a "1-vs-all" manner !!!
+#   class2show:               "colnames(scores) | table(y)"
+#   predicted.class.label:    "class2show-Column Vector" of "scores" or "probs"; each patient is a row with the classifier score/prob estimate for "class2show" diagnosis => real number 
+#   pred4diagn:               Intern variable of the function. It is the "class2show" subsetted version of predicted.class.label. Also provided in the "res" list output for later use. 
+#   bins:                     The number of bins to use in the reliability plot
+#   scale:                    Logical (default=T); if the "predicted.class.label" column should be scaled to 0 and 1 before creating reliability plot; defaults to TRUE
+#   scale.na.rm:              Remove NA values during scaling i.e. rm.na = TRUE; (default=T);
+#   plot.curve.color:         Define color for the curve; charachter; use standard R colors; 
+#   plot.curve.name:          Label/Name to show in the legend for the given curve; use single words with out spaces; it will be converted to character;
+#   add.subplot.histogram     Logical (default=T); if the generated histogram should be added to the existing plot as subplot; 
+#   Output/return()           1. The numerical results of binning "res$results"; 
+#                             2. the main plot "res$plot"; 
+#                             3. and the histogram "res$histo" 
+#                             4. "res$rec.combo" the captured plot in the plotview internal transparent legend upper-left, with subplot-lower right  
+#                             5. plus subsetted scores "pred4diagn"
+#                             6. original "df.true.frac.vs.mean.pred.NAs" => trace back for differing bin legnths; NaN rows "not a  number"  
+#                             are all separately saved in the results output. 
+#
+#   Remarks/References:       The function was partially modeled after blog post by Daniel Nee. Source http://danielnee.com/tag/platt-scaling/ .
+
+
+my_func_reliab_diagram <- function(all.true.class.labels = all.true.class.labels, class2show = class2show, 
+                                   predicted.class.label = predicted.class.label, bins = bins, scale = T, scale.na.rm = T, 
+                                   plot.curve.color, plot.curve.name, pointcolor = NULL, pointsize = 3, linesize = 3,
+                                   rugplot = T, add.subplot.histogram = T){
+  
+  library(plyr)
+  library(Hmisc) # subplot() => ggplot2
+  library(ggplot2)
+  library(grid) # viewport()
+  
+  # Binarize True Diangostic labels - "1-vs-all"
+  true.binary4diagn <- ifelse(all.true.class.labels == as.character(class2show), 1, 0) # 0, 1  # tried also mapping to -1, 1 <- for SVM, LDA; ISLR, Chapter 9., page 356, 9.4.2. "1-vs-all" suggests (-1,+1) mapping - obviously it gets out of bound
+  # Select "class2show" diagnostic column with SCORES | PROBS for each patient (e.g. 2801)
+  pred4diagn <- predicted.class.label[ ,colnames(predicted.class.label) == as.character(class2show)] # predicted.class.labels are the scores or probs values
+  #Scale scores or probs [0:1]
+  if(scale){
+    rng <- range(pred4diagn, na.rm = scale.na.rm)
+    pred4diagn <- (pred4diagn-rng[1]) / (rng[2]-rng[1])
+  }
+  
+  # Discretize prediction space into n bins  
+  bins.pred4diagn <- cut(pred4diagn, bins)  # cut() generates bin(-0.0001;0.1], (0.1,0.2] etc.  
+  # Cases with predicted value between 0 and 0.1 fall in the first bin, 
+  # between 0.1 and 0.2 in the second bin
+  # 1. Where the magic happens 
+  # ldply() - H. Wickham "Split-Apply-Combine Strategy"
+  # For each element of a list, apply function then combine results into a data frame.
+  df.true.frac.vs.mean.pred <- ldply(levels(bins.pred4diagn), function(x) {
+    idx <- x == bins.pred4diagn           #  
+    c(sum(true.binary4diagn[idx]) / length(true.binary4diagn[idx]),  # $V1 fraction of positive cases in "bin[i]"=idx
+      mean(pred4diagn[idx]))                                         # $V2 mean score prediction for "class2show" diagnosis within that bin[i]
+  })                                                                 # dim(df.true.frac.vs.mean.pred) #  "bin" rows  2 cols
+  # Output! - to check differing bins NAs
+  df.orig.bins <- df.true.frac.vs.mean.pred
+  
+  # Remove NAs. 
+  # Note: partially obsolote. Ideally there should be no NAs in the first place. Plus, if scaled = T then na.rm = T (defaults) => There should be no NA at this stage, anyway.
+  # However NaN are possible in ldply() step.
+  is.nan.idx.test <- !is.nan(df.true.frac.vs.mean.pred$V2) 
+  df.true.frac.vs.mean.pred <- df.true.frac.vs.mean.pred[is.nan.idx.test, ]
+  
+  # 2. MAINPLOT - Generate Reliability plot
+  if(is.null(pointcolor)){pointcolor = as.character(plot.curve.color)}
+  
+  p <- ggplot(aes(x = V2, y = V1, colour = as.character(plot.curve.color)), data = df.true.frac.vs.mean.pred) + 
+    geom_line(size = linesize) + xlim(0,1) + ylim(0, 1)
+  # Add points
+  p <- p + geom_point(data = df.true.frac.vs.mean.pred, size = pointsize, colour = pointcolor)
+  # Add 45° - "ideal" line
+  p <- p + geom_abline(slope = 1, intercept = 0, colour = "grey") 
+  # Labels
+  p <- p + labs(title = paste0("Reliability Plot - Tumor diagnosis: ", as.character(class2show)), 
+                x = "Mean prediction", y = "Observed fraction", colour = "Method")
+  p <- p + scale_color_manual(values = as.character(plot.curve.color), labels = as.character(plot.curve.name))
+  #p <- p + geom_rug(data = predicted.class.label, aes(colour = as.character(plot.curve.color)), sides = "t")   #df.true.frac.vs.mean.pred
+  #p <- p + geom_rug(sides = "t", colour = as.character(plot.curve.color), size = 2, inherit.aes = F)   #df.true.frac.vs.mean.pred
+  if(rugplot){ p <- p + geom_rug()}
+  p <- p + theme_light(base_size = 14)   # changed to light
+  print(p) # so that it is printed to "plot" tab (ctr+6)
+  
+  # 3. Generate histogram for subplot
+  sub.p.hist <- qplot(pred4diagn, geom = "histogram", 
+                      #main = paste0("Histogram of ", as.character(plot.curve.name), "for Diagnosis", as.character(class2show)),
+                      xlab = as.character(plot.curve.name), fill=I(as.character(plot.curve.color)), alpha=I(.5)) + # alpha controls transparency of the plot itself
+    # Set transparent backgrounds
+    theme(text = element_text(colour = "grey", size = 10),
+          panel.background = element_rect(fill = "transparent", colour = NA),
+          plot.background = element_rect(fill = "transparent", colour = NA),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  # If add histogram is true 
+  if(add.subplot.histogram){
+    # Basic version - visually not so attractive
+    #subplot(hist(y.pred4diagn, xlab="", ylab="", main="", xlim=c(0,1), col="blue"), # grconvertX(c(0.65, 0.85), "npc"), grconvertY(c(0.05, .40), "npc")) # "npc" normalized plot coordinates.
+    # graphics::grconvertX | grconvertY # Convert between graphics coordinate systems. 
+    
+    # Reposition Legend within main plot upper-left + Make it transparent # Thus easier to navigate viewport() & use the whole plot area 
+    p2 <- p + theme(legend.background = element_rect(colour = NA, fill = "transparent"),
+                    legend.justification=c(0.05,0.95), legend.position=c(0.05,0.95))
+    print(p2)
+    # Source & Help: 
+    # https://learnr.wordpress.com/2009/05/08/ggplot2-plot-inside-a-plot/
+    # https://stat.ethz.ch/R-manual/R-devel/library/grid/doc/viewports.pdf  # divide the drawing region into several rows and columns => predefine layout.pos.row/col
+    vp <- viewport(x = 0.95, y = 0.1, width = 0.35, height = 0.35, just = c("right", "bottom"))
+    print(sub.p.hist, vp = vp)
+    #dev.control("enable")
+    rec.plot <- recordPlot()  # record printed plot view <- transparent legend upper left + subplot-histo lower right
+  }
+  
+  # Return results
+  res <- list(results = list( df.true.frac.vs.mean.pred = df.true.frac.vs.mean.pred, pred4diagn.scaled01 = pred4diagn),
+              plot = p, 
+              histo = sub.p.hist,
+              rec.combo = rec.plot,
+              pred.diagn.subset = pred4diagn,
+              df.true.frac.vs.mean.pred.NaNs = df.orig.bins)
+  return(res)
+}
+```
+
+### Custom calibration/reliability plot COMBO (COMBINATION) PLOTTER - "my_func_reliab_diag_combo_plotter()"
+
+This function combines plot elements created by the `my_func_reliab_diagram()` function to plot two calibration curves on top of each other.
+
+```{r}
+# COMBO PLOTTER
+my_func_reliab_diag_combo_plotter <- function(rel.diag.output.raw = rel.diag.output.raw, 
+                                              rel.diag.output.calib = rel.diag.output.calib, class2show = class2show,
+                                              col.raw, col.calib, col.legend.text.raw, col.legend.text.calib,
+                                              pointsize = 3, linesize = 1,
+                                              add.rug4bins = T, color4rugbins.raw = NULL, color4rugbins.calib = NULL, rug.transparency = 0.2,
+                                              add.rugs.pred.sc.pr = T, 
+                                              legend.2.lower.right = F, legend.2.lower.right.x.coord = 0.60, legend.2.lower.right.y.coord = 0.15){
+  # Bin/NaN check
+  bins_raw <- dim(rel.diag.output.raw$results$df.true.frac.vs.mean.pred)[1]   # number of rows = bins
+  bins_calib <- dim(rel.diag.output.calib$results$df.true.frac.vs.mean.pred)[1]
+  if(bins_raw != bins_calib){message("Info: Input variables have differing bin length. ?Due to small case pool?.", 
+                                     "\nCheck 'output$df.true.frac.vs.mean.pred.NaNs' of my_func_reliab_diagram()")}
+  else{"Input variables have the same bin length."}
+  
+  # Rug binpoint color
+  if(is.null(color4rugbins.raw)){color4rugbins.raw <- col.raw}
+  if(is.null(color4rugbins.calib)){color4rugbins.calib  <-  col.calib}
+  
+  # Plot "raw"/uncalibrated scores
+  p <- ggplot(aes(x = V2, y = V1), data = rel.diag.output.raw$results$df.true.frac.vs.mean.pred) + 
+    geom_line(aes(colour=as.character(col.raw)), size = linesize) + 
+    geom_point(data = rel.diag.output.raw$results$df.true.frac.vs.mean.pred, colour=as.character(col.raw), size = pointsize) + 
+    xlim(0,1) + ylim(0, 1)
+  # Add rug lines for bin means/proportions
+  if(add.rug4bins){p <- p + geom_rug(aes(x = V2, y = V1), data = rel.diag.output.raw$results$df.true.frac.vs.mean.pred, 
+                                     colour = as.character(color4rugbins.raw), sides = "bl")}
+  # Add rug lines for bin means/proportions
+  p <- p + geom_line(aes(x= V2, y = V1, colour=as.character(col.calib)), data = rel.diag.output.calib$results$df.true.frac.vs.mean.pred, size = linesize) + 
+    geom_point(data=rel.diag.output.calib$results$df.true.frac.vs.mean.pred, colour=as.character(col.calib), size = pointsize)
+  # Add rugs
+  if(add.rug4bins){p <- p + geom_rug(aes(x= V2, y = V1), data = rel.diag.output.calib$results$df.true.frac.vs.mean.pred, 
+                                     colour=as.character(color4rugbins.calib), sides = "bl")}
+  # Add 45° - "ideal" line
+  p <- p + geom_abline(slope = 1, intercept = 0, colour = "grey")
+  
+  # Labels
+  p <- p + labs(title=paste0("Reliability Plot - Tumor diagnosis: ", as.character(class2show)), 
+                x = "Mean prediction", y = "Observed fraction", colour = "Method")
+  # Color Legend and text
+  p <- p + scale_color_manual(values = c(as.character(col.raw), as.character(col.calib)),
+                              # adding scale_color_manual needs the inverted label order to be correct!
+                              labels = c(as.character(col.legend.text.raw), as.character(col.legend.text.calib)))
+  print(p) # Print into "Plots"
+  p.classic <- p + theme_classic(base_size = 14)
+  print(p.classic)
+  p.class.leg.in <- p.classic + theme(legend.justification=c(0.075, 0.90), legend.position=c(0.075, 0.90)) #legend.position=c(0.40, 0.15)) #legend.position=c(0.075, 0.90)) # legend.position=c(0.60, 0.15)) # swapped to lower corner
+  print(p.class.leg.in)
+  plot.light.leg.in <- p + theme_light(base_size = 14) + theme(legend.justification=c(0.075, 0.90), legend.position=c(0.075, 0.90)) # ptXGB LGG lower right corner  ## legend.justification=c(0.40, 0.15), legend.position=c(0.70, 0.15)  
+  #legend.position=c(0.40, 0.15)) #legend.position=c(0.075, 0.90))
+  if(legend.2.lower.right){
+    plot.light.leg.in <- p + theme_light(base_size = 14) + theme(legend.justification=c(0.40, 0.15), legend.position=c(legend.2.lower.right.x.coord, legend.2.lower.right.y.coord)) # lower right corner  
+  }
+  print(plot.light.leg.in)
+  
+  # Add predicted distribution rugs - bottom raw scors # top calibrated probs
+  if(add.rugs.pred.sc.pr){
+    df.preds <- data.frame(sc = rel.diag.output.raw$results$pred4diagn.scaled01, 
+                           pr = rel.diag.output.calib$results$pred4diagn.scaled01)
+    
+    pl.light.rug <- plot.light.leg.in + 
+      geom_rug(data=df.preds, mapping = aes(x = sc), color=as.character(col.raw), sides = "b", alpha = rug.transparency, inherit.aes = F) +
+      geom_rug(data=df.preds, mapping = aes(x = pr), color=as.character(col.calib), sides = "t", alpha = rug.transparency, inherit.aes = F)
+  }
+  
+  # Return 5 plot versions as output
+  res <- list(plot.basic = p, 
+              plot.classic = p.classic, 
+              plot.class.legendin = p.class.leg.in,
+              plot.light.legendin = plot.light.leg.in,
+              plot.light.rug = pl.light.rug)
+  return(res) 
+}  
+```
+
+***
+
+## Create calibration plots 
+
+### FASTTEXT
+#### FINDINGS
+
+```{r}
+getwd()
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/fasttext-find/CVfold.")
+# contains "scores.pred.fasttext" 
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- scores.pred.fasttext
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind,scorel)
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+y.pred.scores <- scores
+
+rel.plot_raw_scores_fasttext_find  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                             class2show = "yes", 
+                                                             predicted.class.label = y.pred.scores, 
+                                                             bins = 10, 
+                                                             scale = T, scale.na.rm = T, 
+                                                             plot.curve.color = "#377eb8",  
+                                                                # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                             pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                             plot.curve.name = "fastText findings predicted probabilities",
+                                                             add.subplot.histogram = T, 
+                                                             rugplot = F # if later combining plots remove # otherwise rugs are doubled
+                                                             )
+```
+
+### FASTTEXT
+#### IMPRESSIONS
+
+```{r}
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/fasttext-impr/CVfold.")
+# contains "scores.pred.fasttext" 
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- scores.pred.fasttext
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind,scorel)
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+y.pred.scores <- scores
+
+rel.plot_raw_scores_fasttext_impr  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                             class2show = "yes", 
+                                                             predicted.class.label = y.pred.scores, 
+                                                             bins = 10, scale = T, scale.na.rm = T, 
+                                                             plot.curve.color = "#e41a1c", # <= red  # blue => #"#377eb8",          
+                                                             # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                             pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                             plot.curve.name = "fastText impressions predicted probabilities",    
+                                                             add.subplot.histogram = T,
+                                                             rugplot = F # if later combining plots remove # otherwise rugs are doubled
+                                                             )
+
+### COMBO PLOT
+combo.rel.plot_fasttext <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_fasttext_find, 
+                                                             rel.diag.output.calib = rel.plot_raw_scores_fasttext_impr, 
+                                                             class2show = "yes",                                    
+                                                             col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                             col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                             col.legend.text.raw = "fastText findings",                            
+                                                             col.legend.text.calib = "fastText impressions",   
+                                                             pointsize = 3, linesize = 1,
+                                                             add.rug4bins = T, 
+                                                             color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                             add.rugs.pred.sc.pr = T)
+
+combo.rel.plot_fasttext$plot.light.rug
+``` 
+
+***
+
+### XGBOOST
+#### FINDINGS
+
+```{r}
+getwd()
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/XGBOOST-find-p907/CVfold.")
+# contains "scores.pred.fasttext" 
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- scores  # caret. aspects-check 
+  #probl[[i]] <- probs  #probs
+}
+scores <- do.call(rbind,scorel)
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+y.pred.scores <- scores
+
+rel.plot_raw_scores_xgboost_find  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                            class2show = "yes",   
+                                                            predicted.class.label = y.pred.scores, 
+                                                            bins = 10, scale = T, scale.na.rm = T, 
+                                                            plot.curve.color = "#377eb8",          
+                                                            # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                            pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                            plot.curve.name = "XGBoost findings predicted probabilities",    
+                                                            add.subplot.histogram = T,
+                                                            rugplot = T # if later combining plots remove # otherwise rugs are doubled
+                                                            )
+
+rel.plot_raw_scores_xgboost_find$histo
+```
+
+### XGBOOST
+#### IMPRESSIONS
+
+```{r}
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/XGBOOST-impr-p675/CVfold.")
+# contains "scores.pred.fasttext" 
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- scores
+  #probl[[i]] <- probs #probs
+}
+scores <- do.call(rbind,scorel)
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+y.pred.scores <- scores
+
+rel.plot_raw_scores_xgboost_impr  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                            class2show = "yes", 
+                                                            predicted.class.label = y.pred.scores, 
+                                                            bins = 10, scale = T, scale.na.rm = T, 
+                                                            plot.curve.color = "#e41a1c", # <= red  # blue => #"#377eb8", 
+                                                            # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                            pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                            plot.curve.name = "XGBoost impressions predicted probabilities",    
+                                                            add.subplot.histogram = T,
+                                                            rugplot = F # if later combining plots remove # otherwise rugs are doubled
+                                                            )
+
+### COMBO PLOT
+combo.rel.plot_xgboost <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_xgboost_find, 
+                                                            rel.diag.output.calib = rel.plot_raw_scores_xgboost_impr, 
+                                                            class2show = "yes",                                    
+                                                            col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                            col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                            col.legend.text.raw = "XGBoost findings",                          
+                                                            col.legend.text.calib = "XGBoost impressions",   
+                                                            pointsize = 3, linesize = 1,
+                                                            add.rug4bins = T, 
+                                                            color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                            add.rugs.pred.sc.pr = T)
+
+combo.rel.plot_xgboost$plot.light.rug
+```
+
+#### LEGEND TO THE LOWER RIGHT 
+
+```{r}
+combo.rel.plot_xgboost_legend_lowerright <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_xgboost_find, 
+                                                                              rel.diag.output.calib = rel.plot_raw_scores_xgboost_impr, 
+                                                                              class2show = "yes",                                    
+                                                                              col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                                              col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                                              col.legend.text.raw = "XGBoost findings",                          
+                                                                              col.legend.text.calib = "XGBoost impressions",   
+                                                                              pointsize = 3, linesize = 1,
+                                                                              add.rug4bins = T, 
+                                                                              color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                                              add.rugs.pred.sc.pr = T,
+                                                                              legend.2.lower.right = T, 
+                                                                              legend.2.lower.right.x.coord = 0.70, legend.2.lower.right.y.coord = 0.10)  ### LEGEND TO LOWER RIGHT 
+# ptXGB LGG lower right corner  ## legend.position=c(0.70, 0.15)
+
+combo.rel.plot_xgboost_legend_lowerright
+combo.rel.plot_xgboost_legend_lowerright$plot.light.rug
+```
+
+
+***
+
+### SVM 
+#### FINDINGS
+
+```{r}
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/SVM-e1071-find-p907/CVfold.")
+# contains "scores.pred.fasttext" 
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- scores.pred.svm.e1071.mtx
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test  # needs relabelling of rowids
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind,scorel)
+scores
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+scores
+y.pred.scores <- scores
+
+
+rel.plot_raw_scores_svm_find  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                        class2show = "yes", 
+                                                        predicted.class.label = y.pred.scores, 
+                                                        bins = 10, scale = T, scale.na.rm = T, 
+                                                        plot.curve.color = "#377eb8", # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                        pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                        plot.curve.name = "SVM-LK findings predicted probabilities",    
+                                                        add.subplot.histogram = T,
+                                                        rugplot = F # if later combining plots remove # otherwise rugs are doubled
+                                                        )
+```
+
+### SVM 
+#### IMPRESSIONS
+
+```{r}
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/SVM-e1071-impr-p675/CVfold.")
+# contains "scores.pred.fasttext" 
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- scores.pred.svm.e1071.mtx
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind,scorel)
+scores
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+scores
+y.pred.scores <- scores
+
+rel.plot_raw_scores_svm_impr  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                        class2show = "yes", 
+                                                        predicted.class.label = y.pred.scores, 
+                                                        bins = 10, scale = T, scale.na.rm = T, 
+                                                        plot.curve.color = "#e41a1c", # <= red  # blue => #"#377eb8",          
+                                                        # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                        pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                        plot.curve.name = "SVM-LK impressions predicted probabilities",    
+                                                        add.subplot.histogram = T,
+                                                        rugplot = T # if later combining plots remove # otherwise rugs are doubled
+                                                        )
+
+rel.plot_raw_scores_svm_impr
+
+### COMBO PLOT
+combo.rel.plot_svm <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_svm_find, 
+                                                        rel.diag.output.calib = rel.plot_raw_scores_svm_impr, 
+                                                        class2show = "yes",                                   
+                                                        col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                        col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                        col.legend.text.raw = "SVM-LK findings",                            
+                                                        col.legend.text.calib = "SVM-LK impressions",   
+                                                        pointsize = 3, linesize = 1,
+                                                        add.rug4bins = T, 
+                                                        color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                        add.rugs.pred.sc.pr = T)
+combo.rel.plot_svm$plot.light.rug
+```
+
+***
+
+### ELNET 
+#### FINDINGS
+
+```{r}
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/ELNET-find-p907/CVfold.")
+# contains probs
+# additional rowid assignment and reordering is needed 
+
+#performance_evaluator_glmnet_binomial_fasttext() # find F2
+# if(binary.vrf.xgb.extra.outfold.rowid.rematching){ 
+#   for(j in 1:5){
+#     rownames(probs.l[[j]]) <-  nfolds..[[j]][[1]][[1]]$test # outerfold$test
+#   }
+# }
+
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- probs # elastic net
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind, scorel)
+class(scores) # matrix
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+class(scores) # numeric
+scores <- as.matrix(scores)
+colnames(scores) <- "yes"
+scores
+y.pred.scores <- scores
+
+rel.plot_raw_scores_elnet_find  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                          class2show = "yes", 
+                                                          predicted.class.label = y.pred.scores, 
+                                                          bins = 10, scale = T, scale.na.rm = T, 
+                                                          plot.curve.color = "#377eb8",          
+                                                          # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                          pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                          plot.curve.name = "ELNET findings predicted probabilities",    
+                                                          add.subplot.histogram = T,
+                                                          rugplot = F # if later combining plots remove # otherwise rugs are doubled
+                                                          )
+```
+
+### ELNET 
+#### IMPRESSIONS
+
+```{r}
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/data4ensemble/ELNET-impr-p675/CVfold.")
+# contains "scores.pred.fasttext" 
+
+#performance_evaluator_glmnet_binomial_fasttext() # find F2
+# if(binary.vrf.xgb.extra.outfold.rowid.rematching){ 
+#   for(j in 1:5){
+#     rownames(probs.l[[j]]) <-  nfolds..[[j]][[1]][[1]]$test # outerfold$test
+#   }
+# }
+
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- probs # elastic net
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind, scorel)
+class(scores) # matrix
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+class(scores) # numeric
+scores <- as.matrix(scores)
+colnames(scores) <- "yes"
+scores
+y.pred.scores <- scores
+
+rel.plot_raw_scores_elnet_impr  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                          class2show = "yes", 
+                                                          predicted.class.label = y.pred.scores, 
+                                                          bins = 10, scale = T, scale.na.rm = T, 
+                                                          plot.curve.color = "#e41a1c", # <= red  # blue => #"#377eb8",          
+                                                          # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                          pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                          plot.curve.name = "ELNET impressions predicted probabilities",    
+                                                          add.subplot.histogram = T,
+                                                          rugplot = F # if later combining plots remove # otherwise rugs are doubled
+                                                          )
+
+### COMBO PLOT
+combo.rel.plot_elnet <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_elnet_find, 
+                                                          rel.diag.output.calib = rel.plot_raw_scores_elnet_impr, 
+                                                          class2show = "yes",                                    
+                                                          col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                          col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                          col.legend.text.raw = "ELNET findings",                            
+                                                          col.legend.text.calib = "ELNET impressions",   
+                                                          pointsize = 3, linesize = 1,
+                                                          add.rug4bins = T, 
+                                                          color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                          add.rugs.pred.sc.pr = T)
+
+combo.rel.plot_elnet$plot.light.rug
+```
+
+***
+
+## ENSEMBLE - vRF - p16 - findings 8 + impressions 8
+
+```{r}
+"probsCVfold.ensemble_data.vRF"
+
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/ensemble-calibrated-vRF-testrun-1-p16-all-scale-F-only-yes/probsCVfold.ensemble_data.vRF.")
+# contains "probsCVfold.ensemble_data.vRF" 
+
+#performance_evaluator_glmnet_binomial_fasttext() # find F2
+# if(binary.vrf.xgb.extra.outfold.rowid.rematching){ 
+#   for(j in 1:5){
+#     rownames(probs.l[[j]]) <-  nfolds..[[j]][[1]][[1]]$test # outerfold$test
+#   }
+# }
+
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- probs # ensemble
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind, scorel)
+class(scores) # matrix
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+class(scores) # numeric
+scores
+y.pred.scores <- scores
+y.pred.scores
+
+rel.plot_raw_scores_ensemble_p16_find8_impr8_y  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                          class2show = "yes", 
+                                                          predicted.class.label = y.pred.scores, 
+                                                          bins = 10, scale = T, scale.na.rm = T, 
+                                                          plot.curve.color = "#e41a1c", # <= red  # blue => #"#377eb8",          
+                                                          # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                          pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                          plot.curve.name = "Ensemble vRF predicted probabilities",    
+                                                          add.subplot.histogram = T,
+                                                          rugplot = T # if later combining plots remove # otherwise rugs are doubled
+                                                          )
+
+rel.plot_raw_scores_ensemble_p16_find8_impr8_y
+```
+
+## ENSEMBLE - vRF - p8 - findings only
+
+```{r}
+"probsCVfold.ensemble_data.vRF"
+
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/ensemble-calibrated-vRF-testrun-1-p8-all-scale-F-only-FINDINGS-yes/probsCVfold.ensemble_data.vRF.")
+# contains "probsCVfold.ensemble_data.vRF" 
+
+#performance_evaluator_glmnet_binomial_fasttext() # find F2
+# if(binary.vrf.xgb.extra.outfold.rowid.rematching){ 
+#   for(j in 1:5){
+#     rownames(probs.l[[j]]) <-  nfolds..[[j]][[1]][[1]]$test # outerfold$test
+#   }
+# }
+
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- probs # ensemble
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind, scorel)
+class(scores) # matrix
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+class(scores) # numeric
+scores
+y.pred.scores <- scores
+y.pred.scores
+
+rel.plot_raw_scores_ensemble_p8_find_y  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                          class2show = "yes", 
+                                                          predicted.class.label = y.pred.scores, 
+                                                          bins = 10, scale = T, scale.na.rm = T, 
+                                                          plot.curve.color = "#377eb8",          
+                                                          # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                          pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                          plot.curve.name = "Ensemble vRF predicted probabilities",    
+                                                          add.subplot.histogram = T,
+                                                          rugplot = T # if later combining plots remove # otherwise rugs are doubled
+                                                          )
+```
+
+## ENSEMBLE - vRF - p8 - impressions only
+
+```{r}
+"probsCVfold.ensemble_data.vRF"
+
+loadpathname <- file.path("/Users/mme/Documents/GitHub/aspect-check/code/ensemble/ensemble-calibrated-vRF-testrun-1-p8-all-scale-F-only-IMPRESSIONS-yes/probsCVfold.ensemble_data.vRF.")
+# contains "probsCVfold.ensemble_data.vRF" 
+
+#performance_evaluator_glmnet_binomial_fasttext() # find F2
+# if(binary.vrf.xgb.extra.outfold.rowid.rematching){ 
+#   for(j in 1:5){
+#     rownames(probs.l[[j]]) <-  nfolds..[[j]][[1]][[1]]$test # outerfold$test
+#   }
+# }
+
+
+probl <- scorel <- list()
+for(i in 1:5){
+  load(paste0(loadpathname, i,".",0,".RData"))
+  scorel[[i]] <- probs # ensemble
+  rownames(scorel[[i]]) <-  nfolds[[i]][[1]][[1]]$test
+  #probl[[i]] <- scores.pred.fasttext #probs
+}
+scores <- do.call(rbind, scorel)
+class(scores) # matrix
+scores <- scores[match(anno$sentrix, rownames(scores)), ] # anno$sentrix # seq(1,206,1)
+class(scores) # numeric
+scores
+y.pred.scores <- scores
+y.pred.scores
+
+rel.plot_raw_scores_ensemble_p8_impr_y  <- my_func_reliab_diagram(all.true.class.labels = y, 
+                                                          class2show = "yes", 
+                                                          predicted.class.label = y.pred.scores, 
+                                                          bins = 10, scale = T, scale.na.rm = T, 
+                                                          plot.curve.color = "#e41a1c", # <= red  # blue => #"#377eb8",          
+                                                          # color tipps: skyblue, gold, red, (light)green, purple, #e41a1c blue
+                                                          pointcolor = NULL, pointsize = 3, linesize = 1,
+                                                          plot.curve.name = "Ensemble vRF predicted probabilities",    
+                                                          add.subplot.histogram = T,
+                                                          rugplot = T # if later combining plots remove # otherwise rugs are doubled
+                                                          )
+
+rel.plot_raw_scores_ensemble_p8_impr_y$rec.combo
+rel.plot_raw_scores_ensemble_p8_impr_y$histo
+```
+
+```{r}
+### COMBO PLOT
+combo.rel.plot_ensemble_vRF_find8_impr8 <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_ensemble_p8_find_y, 
+                                                          rel.diag.output.calib = rel.plot_raw_scores_ensemble_p8_impr_y, 
+                                                          class2show = "yes",                                    
+                                                          col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                          col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                          col.legend.text.raw = "Ensemble vRF findings only",                            
+                                                          col.legend.text.calib = "Ensemble vRF impressions only",   
+                                                          pointsize = 3, linesize = 1,
+                                                          add.rug4bins = T, 
+                                                          color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                          add.rugs.pred.sc.pr = T)
+
+combo.rel.plot_ensemble_vRF_find8_impr8
+
+
+```
+
+```{r}
+combo.rel.plot_ensemble_vRF_find8_impr8_legend_lowerright <- my_func_reliab_diag_combo_plotter(rel.diag.output.raw = rel.plot_raw_scores_ensemble_p8_find_y, 
+                                                          rel.diag.output.calib = rel.plot_raw_scores_ensemble_p8_impr_y, 
+                                                          class2show = "yes",                                    
+                                                          col.raw = "#377eb8",      # #377eb8-red; # red,   skyblue
+                                                          col.calib = "#e41a1c", #"#a6d96a",    # "#e41a1c",  ##a6d96a-green # #e41a1c-red; # green, gold
+                                                          col.legend.text.raw = "Ensemble vRF findings only",                            
+                                                          col.legend.text.calib = "Ensemble vRF impressions only",   
+                                                          pointsize = 3, linesize = 1,
+                                                          add.rug4bins = T, 
+                                                          color4rugbins.raw = "darkblue", color4rugbins.calib = "darkred", rug.transparency = 0.3,
+                                                          add.rugs.pred.sc.pr = T,
+                                                          legend.2.lower.right = T, 
+                                                          legend.2.lower.right.x.coord = 0.60, legend.2.lower.right.y.coord = 0.10)  ### LEGEND TO LOWER RIGHT # same as xgboost y=0.10
+
+combo.rel.plot_ensemble_vRF_find8_impr8_legend_lowerright
+combo.rel.plot_ensemble_vRF_find8_impr8_legend_lowerright$plot.light.rug
+```
+
+
+***
+
+## Calibration plots - save plots 
+
+```{r pressure, echo=FALSE}
+calibration_plot_pdf_saver <- function(list.of.calibration.plot.object.names = NULL, 
+                                       out.path = "./calibration-plots",
+                                       list.contains.combo.plots = T,
+                                       plot.x.width = 20, 
+                                       plot.y.height = 20, # dinA4 w210 x h297mm
+                                       plot.unit = "cm",
+                                       plot.dpi = 300)
+{
+  
+  if(is.null(list.of.calibration.plot.object.names) & exists("list.calibration.plots")){
+    list.of.calibration.plots <- get("list.calibration.plots", envir = .GlobalEnv)
+  } else {
+    stop("Please provide a list.of.calibration.plots object, which contains the image object created by my_func_reliab_diagram() and my_func_reliab_diag_combo_plotter() functions")
+  }  
+  
+  #folder.path <- file.path(getwd(), out.path)
+  folder.path <- file.path(out.path)
+  dir.create(folder.path, recursive = T, showWarnings = T)
+  
+  list.of.names <- list("fasttext_find", "fasstext_impr",
+                        "xgboost_find", "xgboost_impr",
+                        "svm_find", "svm_impr",
+                        "elnet_find", "elnet_impr")
+  
+  list.of.names.combo <- paste(list.of.names, "combo", sep = "_")
+  
+  if(isFALSE(list.contains.combo.plots)){
+    #lapply(seq_along(list.of.calibration.plots), function(i){
+    for (i in 1:8) {
+      #print(list.of.calibration.plots[[i]]$plot.light.rug)
+      message("\n Saving plot object: ' ", list.of.names[[i]], " ' ... @ ", Sys.time())
+      message("\n Folder path to save to: ", file.path(folder.path, paste(list.of.names[[i]], "pdf", sep = ".")))
+      #print(list.of.calibration.plots[[i]]$rec.combo)
+      # save
+      ggsave(path = out.path,  
+             filename = paste(list.of.names[[i]], "png", sep = "."),
+             device = "png",
+             plot = list.of.calibration.plots[[i]]$rec.combo,
+             width = plot.x.width, height = plot.y.height, # landscape orientation # dinA4 w210 x h297mm
+             units = plot.unit,
+             dpi = plot.dpi)
+      #unlink(paste(list.of.names[[i]], "pdf", sep = "."))
+    #})
+    }
+  } else {
+    # lapply(seq_along(list.of.calibration.plots), function(i){
+    #   print(list.of.calibration.plots[[i]]$rec.combo)
+    #   message("\n Saving plot object: ' ", list.of.names.combo[[i]], " ' ... @ ", Sys.time())
+    #   message("\n Folder path to save to: ", file.path(folder.path, paste(list.of.names.combo[[i]], "pdf", sep = ".")))
+    #   ggsave(path = folder.path,
+    #          filename = paste(list.of.names.combo[[i]], "pdf", sep = "."),
+    #          device = "pdf",
+    #          plot = list.of.calibration.plots[[i]]$plot.light.rug,
+    #          width = plot.x.width, height = plot.y.height, # landscape orientation # dinA4 w210 x h297mm
+    #          units = plot.unit,
+    #          dpi = plot.dpi)
+    #   #unlink(paste(list.of.names.combo[[i]], "pdf", sep = "."))
+    # })
+  }
+}
+```
+
+### Run plot saver function 
+
+#### Single reliability plot + histogram 
+
+```{r}
+# Don't forget to **TURN ON** rugplots if you want to use the realiability plots on their own
+list.calibration.plots <- list(rel.plot_raw_scores_fasttext_find, rel.plot_raw_scores_fasttext_impr, #combo.rel.plot_fasttext,
+                               rel.plot_raw_scores_xgboost_find, rel.plot_raw_scores_xgboost_impr, #combo.rel.plot_xgboost,
+                               rel.plot_raw_scores_svm_find, rel.plot_raw_scores_svm_impr, #combo.rel.plot_svm,
+                               rel.plot_raw_scores_elnet_find, rel.plot_raw_scores_elnet_impr #,combo.rel.plot_elnet
+)
+
+#str(list.calibration.plots)
+```
+
+
+```{r}
+## RUN FOR SIMPLE PLOTS
+calibration_plot_pdf_saver(out.path = "./calibration-plots", list.contains.combo.plots = F)
+```
+
+#### combined reliability plot + light rugplots 
+
+```{r}
+## RUN WITH SEPARATE LISTS FOR COMBO PLOTS
+list.calibration.plots <- list(
+  combo.rel.plot_fasttext,
+  combo.rel.plot_xgboost,
+  combo.rel.plot_svm,
+  combo.rel.plot_elnet
+)
+```
+
+
+```{r}
+# Don't forget to **TURN OFF** rugplots = F in realiab_plotter() if you want to create combined plots
+calibration_plot_pdf_saver(list.contains.combo.plots = T)
+```
+
+#### Simple save
+
+```{r}
+getwd() # "/Users/mme/Documents/GitHub/aspect-check/code/ensemble"
+
+ggsave(path = "./calibration-plots/",
+       filename = "fasttext-calibration-plot-combo.pdf",
+       device = "pdf",
+       plot = list.calibration.plots[[1]]$plot.light.rug,
+       width = 7.5, height = 7.5, # landscape orientation # dinA4 w210 x h297mm
+       units = "in",
+       dpi = 300)
+
+ggsave(path = "./calibration-plots/",
+       filename = "fasttext-calibration-plot-combo-classic.pdf",
+       device = "pdf",
+       plot = list.calibration.plots[[1]]$plot.classic,
+       width = 7.5, height = 7.5, # landscape orientation # dinA4 w210 x h297mm
+       units = "in",
+       dpi = 300)
+
+ggsave(path = "./calibration-plots/",
+       filename = "xgboost-calibration-plot-combo-15x15.pdf",
+       device = "pdf",
+       plot = combo.rel.plot_xgboost$plot.light.rug,
+       width = 15, height = 15, # landscape orientation # dinA4 w210 x h297mm
+       units = "in",
+       dpi = 300, 
+       scale = 0.75
+       )
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
